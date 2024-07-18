@@ -1,0 +1,380 @@
+\documentclass[10pt,a4paper]{article}
+
+\input{AEDmacros}
+\usepackage{caratula,amssymb} % Version modificada para usar las macros de algo1 de ~> https://github.com/bcardiff/dc-tex
+\newcommand{\llamarAux}[1]{\text{\normalfont\ttfamily #1}}
+\newcommand{\llamarPred}[1]{\text{\normalfont\ttfamily #1}}
+\newcommand{\refVector}[1]{\text{#1}}
+\newcommand{\refVariable}[1]{\text{#1}}
+\newcommand{\recursos}{\refVector{recursos}}
+\newcommand{\cooperan}{\refVector{cooperan}}
+\newcommand{\cooperancero}{\refVector{Cooperan\textsubscript{0}}}
+\newcommand{\resultado}{\refVector{res}}
+\newcommand{\trayectoria}{\llamarAux{trayectoria}}
+\newcommand{\trayectoriauno}{\refVector{trayectoria\textsubscript{orig}}}
+\newcommand{\trayectoriados}{\refVector{trayectoria\textsubscript{neg}}}
+\newcommand{\trayectoriamax}{\refVector{trayectoria\textsubscript{max}}}
+\newcommand{\trayectoriaposible}{\refVector{trayectoria\textsubscript{posible}}}
+\newcommand{\trayectorias}{\refVector{trayectorias}}
+\newcommand{\trayectoriascero}{\refVector{Trayectorias\textsubscript{0}}}
+\newcommand{\apuestas}{\refVector{apuestas}}
+\newcommand{\pagos}{\refVector{pagos}}
+\newcommand{\eventos}{\refVector{eventos}}
+\newcommand{\individuo}{\refVector{individuo}}
+%\newcommand{\ind}{\ensuremath{i}}
+\newcommand{\ind}{\refVector{ind}}
+\newcommand{\indcoop}{\refVector{indcoop}}
+\newcommand{\apuestascero}{\refVector{Apuestas\textsubscript{0}}}
+\newcommand{\apuestaposible}{\refVector{apuesta\textsubscript{posible}}}
+
+\titulo{Trabajo Práctico N\textsuperscript{\underline{o}} 1}
+\subtitulo{Especificación y WP}
+
+\fecha{\today}
+
+\materia{Algoritmos y Estructuras de Datos}
+\grupo{Integrantes:}
+
+\integrante{Bianchi, Bruno}{699/22}{bruno@brunobianchi.com.ar}
+\integrante{Castro Vivoda, Iván}{43/22}{icastrovivoda11@gmail.com}
+\integrante{Chen, Santiago}{114/23}{chensantiago000@gmail.com}
+\integrante{Herrera, Agustín}{609/10}{agustin@inventati.org}
+% Pongan cuantos integrantes quieran
+
+% Declaramos donde van a estar las figuras
+% No es obligatorio, pero suele ser comodo
+\graphicspath{{../static/}}
+
+\begin{document}
+
+\maketitle
+
+\section{Especificación}
+\subsection{redistribucionDeLosFrutos}
+
+\begin{proc}{redistribucionDeLosFrutos}{\In recursos : \TLista{\float}, \In cooperan : \TLista{\bool}}{\TLista{\float}}
+	%    \modifica{parametro1, parametro2,..}
+	\requiere{|\recursos|=|\cooperan|}
+	\requiere{|\recursos|>0}
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\recursos| \implicaLuego \recursos [i] > 0}}
+	\asegura{|\resultado|=|\recursos|}
+	\asegura{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\resultado| \implicaLuego \resultado [i] = \recursos [i]*(1-\llamarAux{coopera}(\cooperan[i])) + \llamarAux{fracRecurso$($\recursos,\cooperan$)$}}}
+\end{proc}
+	\aux{fracRecurso}{recursos: \TLista{\float}, cooperan \TLista{\bool}}{\float}{\frac{\sum_{i = 0}^{|\recursos|-1} \recursos[i]*\llamarAux{coopera}(\cooperan[i])}{|\recursos|}}
+	\aux{coopera}{coop: \bool}{\nat}{\IfThenElse {\refVariable{coop = \True}}{1}{0}}
+	
+\subsection{trayectoriaDeLosFrutosIndividualesALargoPlazo}	
+\begin{proc}{trayectoriaDeLosFrutosIndividualesALargoPlazo}{\Inout trayectorias: \TLista{\TLista{\float}}, \In cooperan: \TLista{\bool},
+ \In apuestas: \TLista{\TLista{\float}}, \In pagos: \TLista{\TLista{\float}}, \In eventos: \TLista{\TLista{\nat}} }{}	
+	\requiere{\trayectorias = \trayectoriascero}
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\trayectoriascero| \implicaLuego |\trayectoriascero [i]| = 1}} %la trayectoria inicial tiene un unico tiempo
+	\requiere{|\trayectoriascero| = |\cooperan| = |\apuestas| = |\pagos| = |\eventos|} %misma cantidad de individuos en todas las secuencias
+	\requiere{|\trayectoriascero| > 0}	%al menos un individuo
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\eventos| \implicaLuego |\eventos[i]| > 0}} %tiene que existir al menos 1 tiempo (por cada individuo)
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\trayectoriascero| \implicaLuego \trayectoriascero [i][0] > 0}} %los recursos iniciales son positivos
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\apuestas| \implicaLuego \paraTodo[unalinea]{j}{\ent}{0\leq j<|\apuestas [i]| \implicaLuego \apuestas [i][j] \geq 0}}} %las apuestas son números positivos o cero
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\apuestas| \implicaLuego \sum_{j=0}^{|\apuestas[i]|-1} \apuestas [i][j] = 1}} %las apuestas son proporciones que suman 1 (por individuo)
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\apuestas| \implicaLuego |\apuestas [i]| = |\pagos [i]| > 1}} %el largo de apuestas y de pagos es la cantidad de eventos y como mínimo tiene que haber 2 eventos
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\pagos| \implicaLuego \paraTodo[unalinea]{j}{\ent}{0\leq j<|\pagos [i]| \implicaLuego \pagos[i][j] > 0}}} %todos los pagos son positivos
+
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\eventos| \implicaLuego \paraTodo[unalinea]{j}{\ent}{0\leq j<|\eventos [i]| \implicaLuego 0 \leq \eventos [i][j] < |\apuestas [i]|}}} %el evento que le ha tocado a un individuo tiene que ser un evento posible (no debe exceder el largo de la secuencia apuestas o pagos
+    \asegura{\llamarPred{esTrayectoria}(\trayectorias, \trayectoriascero, \cooperan, \apuestas,\pagos,\eventos)}
+\end{proc}	
+\pred{esTrayectoria}{trayectorias: \TLista{\TLista{\float}}, \trayectoriascero: \TLista{\TLista{\float}}, cooperan: \TLista{\bool}, apuestas: \TLista{\TLista{\float}}, pagos: \TLista{\TLista{\float}}, eventos: \TLista{\TLista{\nat}}}{
+    |\trayectorias|=|\trayectoriascero| \yLuego
+    \\\paraTodo[unalinea]{i}{\ent}{0\leq i < |\trayectorias| \implicaLuego |\trayectorias[i]| = |\eventos[i]|+1} \yLuego
+    \\\paraTodo[unalinea]{i}{\ent}{0\leq i < |\trayectorias| \implicaLuego \trayectorias[i][0] = \trayectoriascero[i][0]} \yLuego
+ \\\paraTodo[unalinea]{i,j}{\ent}{0\leq i < |\trayectorias| \land 0 \leq j < |\eventos[i]| \implicaLuego \\\trayectorias[i][j+1] = \trayectorias[i][j] * \apuestas[i][\eventos[i][j]] * \pagos[i][\eventos[i][j]] * (1-\llamarAux{coopera}(\cooperan[i])) + \frac{\sum_{k = 0}^{|\trayectorias|-1} {\trayectorias[k][j] * \apuestas[k][\eventos[k][j]] * \pagos[k][\eventos[k][j]]}*\llamarAux{coopera}(\cooperan[k])}{|\trayectorias|}}}	
+	
+%\aux{frutosIndividuales}{\In \trayectorias: \TLista{\TLista{\float}, \In \apuestas: \TLista{\TLista{\float}}, \In \pagos: \TLista{\TLista{\float}}, \In \eventos: \TLista{\TLista{\nat}}}} {\float}{\trayectorias[i][j] * \apuestas[i][\eventos[i][j]] * \pagos[i][\eventos[i][j]]}
+
+\aux{coopera}{coop: \bool}{\nat}{\IfThenElse {\refVariable{coop} = \True}{1}{0}}	
+
+\subsection{trayectoriaExtrañaEscalera}	
+\begin{proc}{trayectoriaExtrañaEscalera}{\In \refVector{trayectoria}: \TLista{\float}}{\bool}
+	\requiere{|\refVector{trayectoria}| > 1}
+	\asegura{res = \True \Iff \llamarAux{cantidadMaximoLocal}(\refVector{trayectoria} )= 1}	
+\end{proc}
+\aux{cantidadMaximoLocal}{\In s: \TLista{\float}}{\ent}{\\\IfThenElse{s[0]>s[1]}{1}{0}+\sum_{i=1}^{|s|-2}(\IfThenElse{s[i]>s[i-1]\land s[i]>s[i+1]}{1}{0})+\IfThenElse{s[|s|-1]>s[|s|-2]}{1}{0}}
+
+
+\subsection{individuoDecideSiCooperarONo}	
+\begin{proc}{individuoDecideSiCooperarONo}{\In individuo: \nat, \In recursos: \TLista{\float}, \Inout cooperan: \TLista{\bool}, \In apuestas: \TLista{\TLista{\float}},\\\In pagos \TLista{\TLista{\float}}, \In eventos: \TLista{\TLista{\nat}} }{}
+	\requiere{\cooperan = \cooperancero}
+	\requiere{|\recursos| = |\cooperancero| = |\apuestas| = |\pagos| = |\eventos|}  %misma cantidad de individuos en todas las secuencias
+	\requiere{|\cooperancero| > 1} %tiene que haber al menos 2 individuos (para que tenga sentido el procedimiento)
+	\requiere{0\leq\individuo<|\cooperancero|} %individuo está en rango
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\eventos| \implicaLuego |\eventos[i]| > 0}} %tiene que existir al menos 1 tiempo (por cada individuo)
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\recursos| \implicaLuego \recursos [i] > 0}} %los recursos iniciales son positivos
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\apuestas| \implicaLuego \paraTodo[unalinea]{j}{\ent}{0\leq j<|\apuestas [i]| \implicaLuego \apuestas [i][j] \geq 0}}} %las apuestas son números positivos o cero
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\apuestas| \implicaLuego \sum_{j=0}^{|\apuestas[i]|-1} \apuestas [i][j] = 1}} %las apuestas son proporciones que suman 1 (por individuo)
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\apuestas| \implicaLuego |\apuestas [i]| = |\pagos [i]| > 1}} %el largo de apuestas y de pagos es la cantidad de ev\entos y como mínimo tiene que haber 2 eventos
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\pagos| \implicaLuego \paraTodo[unalinea]{j}{\ent}{0\leq j<|\pagos [i]| \implicaLuego \pagos[i][j] > 0}}} %todos los pagos son positivos
+
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\eventos| \implicaLuego \paraTodo[unalinea]{j}{\ent}{0\leq j<|\eventos [i]| \implicaLuego 0 \leq \eventos [i][j] < |\apuestas [i]|}}} %el evento que le ha tocado a un individuo tiene que ser un evento posible (no debe exceder el largo de la secuencia apuestas o pagos
+
+	\asegura{|\cooperan| = |\cooperancero|}
+	\asegura{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\cooperan| \land i \neq \individuo \implicaLuego \cooperan[i] = \cooperancero[i]} \yLuego
+	\\\existe[unalinea]{\trayectoriauno}{\TLista{\TLista{\float}}}{\\\llamarPred{esTrayectoria}(\trayectoriauno, \individuo, \cooperancero[\individuo],\recursos, \cooperancero, \apuestas,\pagos,\eventos)}\land \\\existe[unalinea]{\trayectoriados}{\TLista{\TLista{\float}}}{\\\llamarPred{esTrayectoria}(\trayectoriados, \individuo, \neg\cooperancero[\individuo],\recursos, \cooperancero, \apuestas,\pagos,\eventos)} \yLuego\\ \trayectoriauno[\individuo][|\eventos|]\geq\trayectoriados[\individuo][|\eventos|] \Iff \cooperan[\individuo] = \cooperancero[\individuo]}
+	%(\existe[unalinea]{\trayectoriauno}{\TLista{\TLista{\float}}}{\\\llamarPred{esTrayectoria}(\trayectoriauno, \individuo, \cooperancero[\individuo],\recursos, \cooperancero, \apuestas,\pagos,\eventos)}\land \\\existe[unalinea]{\trayectoriados}{\TLista{\TLista{\float}}}{\\\llamarPred{esTrayectoria}(\trayectoriados, \individuo, \neg\cooperancero[\individuo],\recursos, \cooperancero, \apuestas,\pagos,\eventos)} \yLuego\\ (\trayectoriauno[\individuo][|\eventos|]<\trayectoriados[\individuo][|\eventos|]) \implica\\ \\\land \cooperan[\individuo] = \neg \cooperancero[\individuo])}
+	\end{proc}
+\pred{esTrayectoria}{\trayectorias: \TLista{\TLista{\float}}, \ind: \nat, \indcoop: \bool , recursos: \TLista{\float}, cooperan: \TLista{\bool}, apuestas: \TLista{\TLista{\float}}, pagos \TLista{\TLista{\float}}, eventos: \TLista{\TLista{\nat}}}
+{
+	\paraTodo[unalinea]{i}{\ent}{0\leq i < |\trayectorias| \implicaLuego \trayectorias[i][0] = \recursos[i] \land \paraTodo[unalinea]{j}{\ent}{0 \leq j < |\eventos[i]| \implicaLuego \\\trayectorias[i][j+1] = \trayectorias[i][j] * \apuestas[i][\eventos[i][j]] * \pagos[i][\eventos[i][j]] * \\(1-\llamarAux{cooperaInd}(i,\ind,\indcoop,\cooperan)) + \frac{1}{|\cooperan|}*\\\sum_{k = 0}^{|\cooperan|-1} {\trayectorias[k][j] * \apuestas[k][\eventos[k][j]] * \pagos[k][\eventos[k][j]]}*\llamarAux{cooperaInd}(k,\ind,\indcoop,\cooperan)}}
+}
+\aux{coopera}{coop: \bool}{\nat}{\IfThenElse {\refVariable{coop} = \True}{1}{0}}
+\aux{cooperaInd}{k: \nat, \ind: \nat, \indcoop: \bool, \cooperan: \TLista{\bool}}{\nat}
+{\\\IfThenElse {k = \ind}{\llamarAux{coopera}(\indcoop)}{\llamarAux{coopera}(\cooperan[k])}}
+
+\subsection{individuoActualizaApuesta}	
+\begin{proc}{individuoActualizaApuesta}{\In individuo: \nat, \In recursos: \TLista{\float}, \In cooperan: \TLista{\bool}, \Inout apuestas: \TLista{\TLista{\float}},\\\In pagos \TLista{\TLista{\float}}, \In eventos: \TLista{\TLista{\nat}} }{}
+	\requiere{\apuestas = \apuestascero}
+	\requiere{|\recursos| = |\cooperan| = |\apuestascero| = |\pagos| = |\eventos|}  %misma cantidad de individuos en todas las secuencias
+	\requiere{|\apuestascero| > 0} %tiene que haber al menos 1 individuo
+	\requiere{0\leq\individuo<|\apuestascero|} %individuo está en rango
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\eventos| \implicaLuego |\eventos[i]| > 0}} %tiene que existir al menos 1 tiempo (por cada individuo)
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\recursos| \implicaLuego \recursos [i] > 0}} %los recursos iniciales son positivos
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\apuestascero| \implicaLuego \paraTodo[unalinea]{j}{\ent}{0\leq j<|\apuestascero [i]| \implicaLuego \apuestascero [i][j] \geq 0}}} %las apuestas son números positivos o cero
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\apuestascero| \implicaLuego \sum_{j=0}^{|\apuestascero[i]|-1} \apuestascero [i][j] = 1}} %las apuestas son proporciones que suman 1 (por individuo)
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\apuestascero| \implicaLuego |\apuestascero [i]| = |\pagos [i]| > 1}} %el largo de apuestas y de pagos es la cantidad de eventos y como mínimo tiene que haber 2 eventos
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\pagos| \implicaLuego \paraTodo[unalinea]{j}{\ent}{0\leq j<|\pagos [i]| \implicaLuego \pagos[i][j] > 0}}} %todos los pagos son positivos
+
+	\requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i <|\eventos| \implicaLuego \paraTodo[unalinea]{j}{\ent}{0\leq j<|\eventos [i]| \implicaLuego 0 \leq \eventos [i][j] < |\apuestascero [i]|}}} %el evento que le ha tocado a un individuo tiene que ser un evento posible (no debe exceder el largo de la secuencia apuestas o pagos
+
+	\asegura{|\apuestas| = |\apuestascero|}
+	\asegura{\existe[unalinea]{\trayectoriamax}{\TLista{\TLista{\float}}}{\llamarPred{esTrayectoria}(\trayectoriamax, \recursos,\cooperan,\apuestas,\pagos,\eventos)} \yLuego
+	\paraTodo[unalinea]{\apuestaposible}{\TLista{\TLista{\float}}}{\llamarPred{esApuestaPosible}(\apuestaposible, \apuestascero, \individuo) \implicaLuego
+	\\\existe[unalinea]{\trayectoriaposible}{\TLista{\TLista{\float}}}{\llamarPred{esTrayectoria}(\trayectoriaposible, \recursos,\cooperan,\apuestaposible,\pagos,\eventos)
+	\\\yLuego \trayectoriamax[\individuo][|\eventos|] \geq \trayectoriaposible[\individuo][|\eventos|]}}}
+	\end{proc}
+%
+\pred{esApuestaPosible}{\apuestaposible: \TLista{\TLista{\float}}, \apuestascero: \TLista{\TLista{\float}}, \individuo: \nat}{
+(|\apuestaposible| = |\apuestascero| \yLuego \\\paraTodo[unalinea]{i}{\ent}{0\leq i<|\apuestaposible| \land i \neq \individuo \implicaLuego \apuestaposible [i] = \apuestascero[i]} \land \\\sum_{k=0}^{|\apuestaposible[\individuo]|-1}\apuestaposible[\individuo][k]=1 \land \\\paraTodo[unalinea]{j}{\ent}{0\leq j<|\apuestaposible[\individuo]| \implicaLuego \apuestaposible[\individuo][j]\geq 0})}
+
+\pred{esTrayectoria}{\trayectorias: \TLista{\TLista{\float}}, recursos: \TLista{\float}, cooperan: \TLista{\bool},\\ apuestas: \TLista{\TLista{\float}}, pagos \TLista{\TLista{\float}}, eventos: \TLista{\TLista{\nat}}}
+	{
+		\paraTodo[unalinea]{i}{\ent}{0\leq i < |\trayectorias| \implicaLuego \trayectorias[i][0] = \recursos[i] \land \paraTodo[unalinea]{j}{\ent}{0 \leq j < |\eventos[i]| \implicaLuego \\\trayectorias[i][j+1] = \trayectorias[i][j] * \apuestas[i][\eventos[i][j]] * \pagos[i][\eventos[i][j]] * \\(1-\llamarAux{coopera}(\cooperan[i])) + \frac{1}{|\cooperan|}*\\\sum_{k = 0}^{|\cooperan|-1} {\trayectorias[k][j] * \apuestas[k][\eventos[k][j]] * \pagos[k][\eventos[k][j]]}*\llamarAux{coopera}(\cooperan[k])}}
+	}
+\aux{coopera}{coop: \bool}{\nat}{\IfThenElse {\refVariable{coop} = \True}{1}{0}}
+
+\newpage
+
+\section{Demostraciones de correctitud}
+
+Verificamos formalmente la correctitud del programa y en un primer paso definimos el invariante de ciclo como:
+
+\begin{equation}
+    \resizebox{.9\hsize}{!}{${\it I} = 0 \leq i \leq |eventos| \yLuego res = recurso(apuesta_c * pago_c)^{\#apariciones(subseq(eventos,0,i),True)} *(apuesta_s * pago_s)^{\#apariciones(subseq(eventos,0,i),False)}$}
+\end{equation}
+
+Donde apariciones: \\
+
+\aux{apariciones}{\In s: \TLista{T}}{\ent}{ \sum_{i = 0}^{|s|-1} (\IfThenElse {s[i] = e}{1}{0})}
+
+\vspace{0.3cm}
+Definimos luego la precondición del ciclo
+\begin{equation}
+    P_c:\{ recurso > 0 \land res=recurso \land i=0 \}
+\end{equation}
+
+\subsection{Axioma 1}
+Axioma 1: Verificamos que $P_c \implies {\it I}$
+\vspace{0.3cm}
+
+\begin{equation}
+    \begin{split}
+        & recurso > 0 \land res=recurso \land i=0  \implies \\
+        & \resizebox{.9\hsize}{!}{$0 \leq 0 \leq |eventos| \yLuego res = recurso(apuesta_c * pago_c)^{\#apariciones(subseq(eventos,0,0),True)}*(apuesta_s * pago_s)^{\#apariciones(subseq(eventos,0,0),False)}$}
+    \end{split}
+\end{equation}
+
+\begin{equation}
+    recurso > 0 \land res=recurso \land i=0 \implies 0 \leq 0 \leq |eventos| \yLuego res = recurso(apuesta_c * pago_c)^0*(apuesta_s * pago_s)^0
+\end{equation}
+
+Lo cual es trivialmente cierto, $\therefore P_c \implies {\it I}$
+\vspace{0.3cm}
+
+\subsection{Axioma 2}
+Axioma 2: Verificamos que $\{\it I \land B \}$ S $\{\it I \}$ \\
+
+\begin{equation}
+    \begin{gathered}
+        wp(S,{\it I}) \equiv wp(if...endif; i:=i+1, I) \\
+        wp(S,{\it I}) \equiv wp(if...endif, wp(i:=i+1, I)) \\
+        wp(S,{\it I}) \equiv wp(if...endif, def(i+1) \land {\it I}_{i+1}^i)\\
+        %A partir de acá no estoy seguro de que sea correcto, hay que añadir la definicion de i+1, que está entre 0 < i < |eventos|
+        \resizebox{.9\hsize}{!}{$wp(S,{\it I})\equiv (-1 \leq i \leq |eventos| -1) \yLuego ((eventos[i]=True \land wp(res=res*apuesta_c*pago_c,{\it I}_{i+1}^i)) \lor (eventos[i]=False \land wp(res=res*apuesta_s*pago_s,{\it I}_{i+1}^i)))$}
+    \end{gathered}
+\end{equation}
+
+\begin{equation}
+    \begin{gathered}
+        wp(S,{\it I}) \equiv (-1 \leq i \leq |eventos|-1) \yLuego \\
+        \resizebox{.9\hsize}{!}{$((eventos[i]=True \land res*(apuesta_c*pago_c)=recurso*(apuesta_c*pago_c)^{\#apariciones(subseq (eventos,0,i+1),True)}*(apuesta_s * pago_s)^{\#apariciones(subseq(eventos,0,i+1),False)})$} \\
+        \resizebox{.9\hsize}{!}{$\lor (eventos[i]=False \land res*(apuesta_s*pago_s)=recurso*(apuesta_c*pago_c)^{\#apariciones(subseq (eventos,0,i+1),True)}*(apuesta_s * pago_s)^{\#apariciones(subseq(eventos,0,i+1),False)}))$}\\
+    \end{gathered}
+\end{equation}
+
+\begin{equation}
+    \begin{gathered}
+        \resizebox{.9\hsize}{!}{$wp(S,{\it I}) \equiv (-1 \leq i \leq |eventos|-1) \yLuego ((eventos[i]=True \yLuego True) \lor (eventos[i]=False \yLuego True))$}
+    \end{gathered}
+\end{equation}
+
+Verificamos que ${\it I} \land B \implies wp(S,{\it I})$
+
+\begin{equation}
+    \begin{gathered}
+        \resizebox{.9\hsize}{!}{$0 \leq i < |eventos| \yLuego res = recurso(apuesta_c * pago_c)^{\#apariciones(subseq(eventos,0,i),True)}*(apuesta_s * pago_s)^{\#apariciones(subseq(eventos,0,i),False)} \implies $}\\
+        \resizebox{.9\hsize}{!}{$(-1 \leq i \leq |eventos|-1) \yLuego ((eventos[i]=True \yLuego True) \lor (eventos[i]=False \yLuego True))$} \\
+        0 \leq i < |eventos| \implies (-1 \leq i \leq |eventos|-1) \\
+        0 \leq i < |eventos| \implies (-1 \leq i < |eventos|)
+    \end{gathered}
+\end{equation}
+
+$\therefore \{\it I \land B \}$ S $\{\it I \}$
+
+\vspace{0.3cm}
+
+\subsection{Axioma 3}
+Axioma 3: Verificamos que ${\it I} \land \neg B \implies Q_c$
+
+\begin{equation}
+    B: \{ i < |eventos|\}
+\end{equation}
+
+\begin{equation}
+    Q_c: \{ res = recurso(apuesta_c * pago_c)^{\#apariciones(eventos,True)} *(apuesta_s * pago_s)^{\#apariciones(eventos,False)} \}
+\end{equation}
+
+
+\begin{equation}
+    \begin{aligned}
+        &\resizebox{.9\hsize}{!}{$(0 \leq i \leq |eventos| \yLuego res = recurso(apuesta_c * pago_c)^{\#apariciones(subseq(eventos,0,i),True)} *(apuesta_s * pago_s)^{\#apariciones(subseq(eventos,0,i),False)})$}\\
+        & \land \neg (i < |eventos|) \implies res = recurso(apuesta_c * pago_c)^{\#apariciones(eventos,True)} *(apuesta_s * pago_s)^{\#apariciones(eventos,False)}
+    \end{aligned}
+\end{equation}
+
+$\neg (i < |eventos|) = i \geq |eventos|$ pero $i \leq |eventos| \therefore i = |eventos|$
+
+\vspace{0.3cm}
+
+Luego:
+
+\begin{equation}
+    \begin{aligned}
+    &\resizebox{.9\hsize}{!}{$res = recurso(apuesta_c * pago_c)^{\#apariciones(subseq(eventos,0,|eventos|),True)} *(apuesta_s * pago_s)^{\#apariciones(subseq(eventos,0,|eventos|),False)}$} \\
+    &\implies res = recurso(apuesta_c * pago_c)^{\#apariciones(eventos,True)} *(apuesta_s * pago_s)^{\#apariciones(eventos,False)}
+    \end{aligned}
+\end{equation}
+
+Pero $subseq(eventos,0,|eventos|) = eventos$
+
+\begin{equation}
+    \begin{aligned}
+    &res = recurso(apuesta_c * pago_c)^{\#apariciones(eventos,True)} *(apuesta_s * pago_s)^{\#apariciones(eventos,False)} \\
+    &\implies res = recurso(apuesta_c * pago_c)^{\#apariciones(eventos,True)} *(apuesta_s * pago_s)^{\#apariciones(eventos,False)} \\
+    \end{aligned}
+\end{equation}
+Que es a lo que se quería llegar. Por lo tanto, ${\it I} \land \neg B \implies Q_c$ \\
+
+Queda así demostrado que $P_c \implies wp(S,Q_c)$
+
+\vspace{0.3cm}
+
+\subsection{Axioma 4}
+Axioma 4: Verificamos que $\{ {\it I} \land B \land V_0 = f_v\}$ S $\{f_v < V_0\}$ es una tripla de Hoare válida
+
+\vspace{0.3cm}
+
+Definimos $f_v$ como $f_v = |eventos| - i$
+\begin{equation}
+    \begin{aligned}
+        & |eventos| - i < V_0 \\
+        & wp(i:= i + 1, |eventos| - i < V_0) = def(i) \land |eventos| -(i+1) < V_0 \\
+        & wp(i:= i + 1, |eventos| - i < V_0) = 0 \leq i \leq |eventos| \land |eventos| - i - 1 < V_0 \\
+        & wp(i:= i + 1, |eventos| - i < V_0) = 0 \leq i \leq |eventos| \land |eventos| - i \leq V_0 \\
+        & wp(i:= i + 1, |eventos| - i < V_0) = 0 \leq i \leq |eventos| \land f_v \leq V_0
+    \end{aligned}
+\end{equation}
+
+Luego, verificamos que ${\it I} \land B \land V_0 = f_v \implies 0 \leq i \leq |eventos| \land f_v \leq V_0$
+
+\begin{equation}
+    \begin{split}
+        &\resizebox{.9\hsize}{!}{$0 \leq i \leq |eventos| \yLuego res = recurso(apuesta_c * pago_c)^{\#apariciones(subseq(eventos,0,i),True)}*(apuesta_s * pago_s)^{\#apariciones(subseq(eventos,0,i),False)}$} \\
+        & \land i < |eventos| \land V_0 = f_v \implies 0 \leq i \leq |eventos| \land f_v \leq V_0
+    \end{split}
+\end{equation}
+
+\begin{equation}
+    \begin{aligned}
+        &0 \leq i < |eventos| \land V_0 = f_v \implies 0 \leq i \leq |eventos| \land f_v \leq V_0 \\
+        &\therefore {\it I} \land B \land V_0 = f_v \implies 0 \leq i \leq |eventos| \land f_v \leq V_0
+    \end{aligned}
+\end{equation}
+
+\vspace{0.3cm}
+
+\subsection{Axioma 5}
+
+Axioma 5: Verificamos que ${\it I} \land f_v \leq 0 \implies \neg B$
+
+\begin{equation}
+    \begin{split}
+        &\resizebox{.9\hsize}{!}{$0 \leq i \leq |eventos| \yLuego res = recurso(apuesta_c * pago_c)^{\#apariciones(subseq(eventos,0,i),True)}*(apuesta_s * pago_s)^{\#apariciones(subseq(eventos,0,i),False)}$} \\
+        &\land |eventos| - i \leq 0 \implies i \geq |eventos|
+    \end{split}
+\end{equation}
+
+\begin{equation}
+    \begin{split}
+        &0 \leq i \leq |eventos| \land |eventos| \leq i \implies i \geq |eventos| \\
+        &i = |eventos| \implies i \geq |eventos|
+    \end{split}
+\end{equation}
+que es lo que se quería probar. De esta forma sabemos que el ciclo y por ende el programa, termina.
+
+\newpage
+
+Habiendo demostrado entonces, que a partir de un estado $P_c$ el programa es correcto y termina, es necesario ahora demostrar que siempre que se ejecute el programa y se cumpla el requiere,
+se llegará a un estado que implique $P_c$. \\
+Es decir, demostrar que vale la tripla $\{P\}$ S $\{P_c\}$, siendo P el requiere de la especificación y S el resto del programa.
+
+\vspace{0.3cm}
+
+$P:\{apuesta_c + apuesta_s = 1 \land pago_c > 0 \land pago_s > 0 \land apuesta_c > 0 \land apuesta_s > 0 \land recurso > 0\}$
+
+\vspace{0.3cm}
+
+$S:res := recurso$ ; $i := 0$
+
+\vspace{0.3cm}
+
+$P_c:\{recurso > 0 \land res = recurso \land i = 0\}$
+
+\vspace{0.3cm}
+
+$P \implies wp(S,P_c)$\\
+
+\vspace{0.3cm}
+
+$wp(res := recurso; i:=0, (recurso > 0 \land res = recurso \land i = 0))$
+
+\vspace{0.3cm}
+$wp(res := recurso, wp(i:=0, (recurso > 0 \land res = recurso \land i = 0))$
+
+\vspace{0.3cm}
+$wp(res := recurso, (recurso > 0 \land res = recurso \land 0 = 0))$
+
+\vspace{0.3cm}
+$recurso > 0 \land recurso = recurso \land 0 = 0$
+
+\vspace{0.3cm}
+$(apuesta_c + apuesta_s = 1 \land pago_c > 0 \land pago_s > 0 \land apuesta_c > 0 \land apuesta_s > 0 \land recurso > 0) \implies recurso > 0$
+
+\vspace{0.3cm}
+Queda entonces demostrado que $P \implies P_c$ y por consiguiente, que el programa es correcto.
+
+\end{document}
